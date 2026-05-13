@@ -1,0 +1,4 @@
+metric,value
+train_accuracy,0.9642857142857143
+test_accuracy,0.9210526315789473
+n_rules,6.0

@@ -1,0 +1,6 @@
+1. IF Petal width (cm) = low THEN class = Setosa
+2. IF Petal length (cm) = middle AND Petal width (cm) = middle THEN class = Versicolor
+3. IF Sepal width (cm) = high AND Petal length (cm) = high THEN class = Virginica
+4. IF Petal length (cm) = high THEN class = Virginica
+5. IF Petal length (cm) = middle THEN class = Versicolor
+6. IF (else / default) THEN class = Setosa
