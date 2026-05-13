@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>CN2 & Decision Tree — Interactive ML Platform</title>
+    <meta name="description" content="CN2 ordered rules and sklearn decision tree on Iris: classify and compare explanations." />
+    <link rel="preconnect" href="https://cdn.plot.ly" crossorigin>
+    <link rel="stylesheet" href="/static/app.css" />
+</head>
+
+<body>
+<div class="page">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand brand-block" aria-label="Application title">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="brand-copy">
+          <h1>CN2 · Tree</h1>
+          <p>Rule induction &amp; decision tree · Interactive ML Platform</p>
+        </div>
+      </div>
+      <div class="topbar-controls">
+        <div class="pill" title="Classifier">
+          <span class="pill-label">Model</span>
+          <select id="model-mode" aria-label="Model">
+            <option value="cn2">CN2 rules</option>
+            <option value="tree">Decision tree</option>
+          </select>
+        </div>
+        <div class="pill" title="Color theme">
+          <span class="pill-label">Theme</span>
+          <select id="theme" aria-label="Theme">
+            <option value="neon">Neon</option>
+            <option value="minimal">Minimal</option>
+            <option value="contrast">Contrast</option>
+          </select>
+        </div>
+        <div class="pill" title="Status">
+          <span class="dot" aria-hidden="true"></span>
+          <span>Online</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="card" aria-label="Control panel">
+      <div class="card-inner">
+        <div class="tabs" role="tablist" aria-label="Sections">
+          <button class="tab" type="button" role="tab" aria-selected="true" data-tab="inputs">Classification</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="rules">Rule list</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="train">Training</button>
+        </div>
+
+        <div class="tab-panels">
+          <div class="tab-panel" data-tab-panel="inputs">
+            <h2>Features</h2>
+            <p class="subtle intro-copy" id="intro-copy">Input features for the selected dataset. CN2 converts continuous values into symbolic bins such as low, middle and high.</p>
+
+            <div class="divider"></div>
+
+            <div class="grid-features">
+              <div class="field-block">
+                <label for="f0">
+                  <span class="label-main" id="f0-name">Sepal length</span>
+                  <span class="label-right" id="f0-unit">cm</span>
+                </label>
+                <input type="number" id="f0" step="0.1" inputmode="decimal" required aria-describedby="intro-copy">
+              </div>
+              <div class="field-block">
+                <label for="f1">
+                  <span class="label-main" id="f1-name">Sepal width</span>
+                  <span class="label-right" id="f1-unit">cm</span>
+                </label>
+                <input type="number" id="f1" step="0.1" inputmode="decimal" required>
+              </div>
+              <div class="field-block">
+                <label for="f2">
+                  <span class="label-main" id="f2-name">Petal length</span>
+                  <span class="label-right" id="f2-unit">cm</span>
+                </label>
+                <input type="number" id="f2" step="0.1" inputmode="decimal" required>
+              </div>
+              <div class="field-block">
+                <label for="f3">
+                  <span class="label-main" id="f3-name">Petal width</span>
+                  <span class="label-right" id="f3-unit">cm</span>
+                </label>
+                <input type="number" id="f3" step="0.1" inputmode="decimal" required>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="subtle">Examples</div>
+            <div class="btn-row" style="margin-top:8px;">
+              <button type="button" class="mini-btn primary" id="preset-setosa">Iris setosa</button>
+              <button type="button" class="mini-btn" id="preset-versicolor">Iris versicolor</button>
+              <button type="button" class="mini-btn" id="preset-virginica">Iris virginica</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <button id="run" class="btn" type="button">
+              <span id="btn-spin" class="spinner" hidden aria-hidden="true"></span>
+              <span id="btn-text">Classify</span>
+            </button>
+
+            <div id="error" class="error" hidden role="alert"></div>
+
+            <div class="divider"></div>
+
+            <div class="kpi" aria-live="polite">
+              <div class="subtle">Predicted class</div>
+              <div id="result" class="value">—</div>
+              <div id="disc-line" class="meta breakable"></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rule-box">
+              <div class="subtle" id="explain-title">First matching rule (ordered list)</div>
+              <p id="rule-text" class="rule-text-content breakable">Run classification or pick an example.</p>
+            </div>
+            <div class="divider"></div>
+            <div class="compare-card" id="compare-card">
+              <div class="subtle">Model comparison</div>
+              <div id="compare-status" class="compare-status">Waiting for prediction…</div>
+              <table class="compare-table">
+                <thead><tr><th>Model</th><th>Result</th><th>Confidence</th></tr></thead>
+                <tbody>
+                  <tr><td>CN2</td><td id="cmp-cn2-class">—</td><td id="cmp-cn2-conf">—</td></tr>
+                  <tr><td>Tree</td><td id="cmp-tree-class">—</td><td id="cmp-tree-conf">—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-tab-panel="rules" hidden>
+            <h2>Model structure</h2>
+            <p class="subtle intro-copy">Both CN2 and Decision Tree models are trained on the same training subset of the selected dataset.</p>
+            <div class="divider"></div>
+            <h3 class="subtle rules-section-title">CN2 — ordered rules</h3>
+            <ol id="rules-list" class="rules-list breakable" aria-label="Ordered CN2 rules"></ol>
+            <div class="divider"></div>
+            <h3 class="subtle rules-section-title">Decision tree — export_text</h3>
+            <pre id="tree-export" class="tree-ascii" aria-label="Decision tree text export">Loading tree…</pre>
+            <div class="divider"></div>
+            <h3 class="subtle rules-section-title">Decision tree — visual</h3>
+            <img id="tree-img" class="tree-diagram" src="/api/tree-plot.png" alt="Decision tree plot" />
+          </div>
+
+          <div class="tab-panel" data-tab-panel="train" hidden>
+            <h2>Training mode</h2>
+            <p class="subtle intro-copy">Retrain both models, inspect metrics and overfitting behaviour.</p>
+            <div class="divider"></div>
+            <label for="dataset"><span class="label-main">Dataset</span></label>
+            <select id="dataset" class="select">
+              <option value="iris">Iris</option>
+              <option value="weather">Weather</option>
+              <option value="loan">Loan approval</option>
+            </select>
+            <div class="grid-features">
+              <div class="field-block">
+                <label for="cn2-beam"><span class="label-main">CN2 beam_width</span></label>
+                <input type="number" id="cn2-beam" value="6" min="2" max="20" step="1">
+              </div>
+              <div class="field-block">
+                <label for="cn2-mincov"><span class="label-main">CN2 min_rule_coverage</span></label>
+                <input type="number" id="cn2-mincov" value="4" min="1" max="20" step="1">
+              </div>
+              <div class="field-block">
+                <label for="tree-depth"><span class="label-main">Tree max_depth</span></label>
+                <input type="range" id="tree-depth" value="4" min="1" max="12" step="1">
+                <div class="subtle">depth = <span id="tree-depth-value">4</span></div>
+              </div>
+              <div class="field-block">
+                <label for="tree-leaf"><span class="label-main">Tree min_samples_leaf</span></label>
+                <input type="number" id="tree-leaf" value="2" min="1" max="10" step="1">
+              </div>
+            </div>
+            <div class="divider"></div>
+            <button id="train-btn" class="btn" type="button">Train models</button>
+            <div id="train-summary" class="meta breakable" style="margin-top:10px;"></div>
+            <div class="divider"></div>
+            <h3 class="subtle rules-section-title">Overfitting curve (Tree)</h3>
+            <div id="overfit-plot" class="plot-host">Train to generate overfitting plot…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card plot-card" aria-label="Feature chart">
+      <div class="plot-header">
+        <div class="plot-title">
+          <h2>Chart</h2>
+          <p class="subtle intro-copy plot-blurb" id="plot-blurb">Your instance vs training mean of the predicted class (same for both models).</p>
+        </div>
+      </div>
+      <div id="plot" class="plot-host" aria-live="polite">Loading chart…</div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
+<script src="/static/app.js" defer></script>
+
+</body>
+</html>
